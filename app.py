@@ -43,7 +43,7 @@ BASE_URL = os.environ['BASE_URL']
 
 connect_db(app)
 
-db.create_all()
+# db.create_all()
 
 
 ##################### ROUTES ##################### 
