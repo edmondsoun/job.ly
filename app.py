@@ -32,10 +32,10 @@ app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ECHO'] = True
 
-app.config['ACCESS_KEY'] = os.environ['ACCESS_KEY']
-app.config['SECRET_ACCESS_KEY'] = os.environ['SECRET_ACCESS_KEY']
+app.config['AWS_ACCESS_KEY_ID'] = os.environ['AWS_ACCESS_KEY_ID']
+app.config['AWS_SECRET_ACCESS_KEY'] = os.environ['AWS_SECRET_ACCESS_KEY']
 app.config['BUCKET'] = os.environ['BUCKET']
-# app.config['SECRET_KEY'] = "SECRET!"
+app.config['SECRET_KEY'] = "SECRET!"
 
 # GLOBAL CONSTANTS
 BUCKET = os.environ['BUCKET']
