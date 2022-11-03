@@ -20,10 +20,15 @@ from utils import *
 
 load_dotenv()
 
+# DB SETUP
+
+database_url = os.environ['DATABASE_URL']
+database_url = database_url.replace('postgres://', 'postgresql://')
+
 app = Flask(__name__)
 
 # CONFIG
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql:///pixly'
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ECHO'] = True
 
