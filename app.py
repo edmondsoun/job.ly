@@ -64,8 +64,8 @@ def show_images():
         searchTerm = request.args['search']
 
         all_images = UserImage.query.filter(or_(
-            UserImage.description.like(f"%{searchTerm}%"),
-            UserImage.exifdata.like(f"%{searchTerm}%")),
+            UserImage.description.ilike(f"%{searchTerm}%"),
+            UserImage.exifdata.ilike(f"%{searchTerm}%")),
             UserImage.published == True).all()
 
     else:
@@ -91,15 +91,15 @@ def process_upload_form():
     
     file = request.files['file']
 
+    if file.filename == '':
+        return redirect('/')
+    
     extra_args = {'ContentType': file.content_type, 'ACL': 'public-read'}
-
+        
     file_with_exif_dict = get_exif_data(file)
     file2 = file_with_exif_dict['file']
     exif_str = file_with_exif_dict['exif']
 
-    if file.filename == '':
-        return redirect('/')
-        
     if file and allowed_file(file.filename):
 
         unique_filename = generate_unique_filename(file.filename)
