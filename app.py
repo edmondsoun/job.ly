@@ -10,7 +10,7 @@ from werkzeug.utils import secure_filename
 from sqlalchemy import update, or_
 
 
-# MODEL IMPORTS 
+# MODEL IMPORTS
 from models import db, connect_db, UserImage
 
 # HELPER FUNCTIONS
@@ -32,8 +32,8 @@ app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ECHO'] = True
 
-app.config['AWS_ACCESS_KEY_ID'] = os.environ['AWS_ACCESS_KEY_ID']
-app.config['AWS_SECRET_ACCESS_KEY'] = os.environ['AWS_SECRET_ACCESS_KEY']
+app.config['DO_ACCESS_KEY_ID'] = os.environ['DO_ACCESS_KEY_ID']
+app.config['DO_SECRET_ACCESS_KEY'] = os.environ['DO_SECRET_ACCESS_KEY']
 app.config['BUCKET'] = os.environ['BUCKET']
 app.config['SECRET_KEY'] = "SECRET!"
 
@@ -46,20 +46,20 @@ connect_db(app)
 # db.create_all()
 
 
-##################### ROUTES ##################### 
+##################### ROUTES #####################
 
-##################### HOMEPAGE ##################### 
+##################### HOMEPAGE #####################
 
 @app.get('/')
 def show_images():
     """
     Show all images where 'published=True'.
     If query parameters are provided, filter based on partial match to image description
-    and 'published=True'. 
+    and 'published=True'.
     """
-    
+
     hasSearch = request.args
-    
+
     if hasSearch:
         searchTerm = request.args['search']
 
@@ -73,29 +73,29 @@ def show_images():
             UserImage.published == True).all()
 
     timestamped_images = []
-    
+
     for image in all_images:
-        timestamped_images.append({"url":f'{BASE_URL}{image.filename}',"timestamp":image.timestamp})
-        
+        timestamped_images.append({"url":f'{BASE_URL}{BUCKET}/{image.filename}',"timestamp":image.timestamp})
+
     return render_template('image_listing.html', all_images = timestamped_images)
 
 
-##################### UPLOAD ##################### 
+##################### UPLOAD #####################
 
 @app.post('/upload')
 def process_upload_form():
     """
-    Upload image to AWS, store filename and other properties in database for later reference.
-    Redirects to edit page or, if invalid filename is provided, redirect to home. 
+    Upload image to DO, store filename and other properties in database for later reference.
+    Redirects to edit page or, if invalid filename is provided, redirect to home.
     """
-    
+
     file = request.files['file']
 
     if file.filename == '':
         return redirect('/')
-    
+
     extra_args = {'ContentType': file.content_type, 'ACL': 'public-read'}
-        
+
     file_with_exif_dict = get_exif_data(file)
     file2 = file_with_exif_dict['file']
     exif_str = file_with_exif_dict['exif']
@@ -104,35 +104,35 @@ def process_upload_form():
 
         unique_filename = generate_unique_filename(file.filename)
         filename = secure_filename(unique_filename)
-        
-        #upload to AWS
-        upload_file(file2, BUCKET, filename, extra_args)
-        
+
+        #upload to DO
+        upload_file(file2, BASE_URL, filename, extra_args)
+
         #add to DB
         new_image = UserImage(
             filename=filename,
             published=False,
-            content_type=file.content_type, 
+            content_type=file.content_type,
             exifdata=exif_str
         )
-        
+
         db.session.add(new_image)
         db.session.commit()
         return redirect(f'edit/{filename}')
-        
-    return redirect('/')
-    
 
-##################### EDIT/PUBLISH ##################### 
+    return redirect('/')
+
+
+##################### EDIT/PUBLISH #####################
 
 @app.get('/edit/<filename>')
 def display_edit(filename):
     '''
     Diplay original photo, edited photo result(if applicable), and form to edit.
     '''
-    
-    og_image = f'{BASE_URL}{filename}'
-    
+
+    og_image = f'{BASE_URL}{BUCKET}/{filename}'
+
     try:
         filter = request.args['filter']
         data = set_filter(urlopen(og_image), filter)
@@ -141,28 +141,28 @@ def display_edit(filename):
     except:
         filter = 'none'
         new_image = None
-    
+
     return render_template(
-        'edit_page.html', 
-        og_image=og_image, 
+        'edit_page.html',
+        og_image=og_image,
         filename=filename,
         filter=filter,
         encoded_image=new_image
         )
-    
+
 @app.post('/edit/<filename>/<filter>')
 def publish_edit(filename, filter):
     '''
-    Uploads edited photo to AWS and returns to homepage.
-    If no edits are requested, update original image 'published' value to 'True' 
+    Uploads edited photo to DO and returns to homepage.
+    If no edits are requested, update original image 'published' value to 'True'
     and redirect to home.
     '''
-    
-    og_image = f'{BASE_URL}{filename}'
+
+    og_image = f'{BASE_URL}{BUCKET}/{filename}'
     og_file = UserImage.query.get(filename)
-    
+
     description = request.form['description']
-    
+
     try:
         data = set_filter(urlopen(og_image), filter)
     except:
@@ -171,19 +171,19 @@ def publish_edit(filename, filter):
         image.description = description
         db.session.commit()
         return redirect('/')
- 
- 
-    #add to AWS:
+
+
+    #add to DO:
     extra_args = {'ContentType': og_file.content_type, 'ACL': 'public-read'}
     unique_filename = generate_unique_filename(filename)
     secured_filename = secure_filename(unique_filename)
 
-    upload_file(data, BUCKET, secured_filename, extra_args)
+    upload_file(data, BASE_URL, secured_filename, extra_args)
 
     #add to DB:
-    edited_image = UserImage(filename=secured_filename, 
-                             published=True, 
-                             content_type=og_file.content_type, 
+    edited_image = UserImage(filename=secured_filename,
+                             published=True,
+                             content_type=og_file.content_type,
                              filter=filter,
                              description=description,
                              exifdata=og_file.exifdata)
