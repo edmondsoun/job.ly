@@ -1,4 +1,3 @@
-=======================================
 Pix.ly: Image Rendering and Editing App
 =======================================
 
@@ -7,7 +6,7 @@ image manipulation and integrated with DigitalOcean Spaces (formerly AWS S3) to
 host and serve images via the cloud.
 
 
-View a deployed version [https://pix-ly.onrender.com/](here).
+View a deployed version [here](https://pix-ly.onrender.com/).
 
 
 Setup
