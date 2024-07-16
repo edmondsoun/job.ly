@@ -22,7 +22,7 @@ load_dotenv()
 
 # DB SETUP
 
-database_url = os.environ['DATABASE_URL']
+database_url = os.environ.get('DATABASE_URL', "postgresql:///pixly")
 database_url = database_url.replace('postgres://', 'postgresql://')
 
 app = Flask(__name__)
@@ -32,14 +32,14 @@ app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ECHO'] = True
 
-app.config['DO_ACCESS_KEY_ID'] = os.environ['DO_ACCESS_KEY_ID']
-app.config['DO_SECRET_ACCESS_KEY'] = os.environ['DO_SECRET_ACCESS_KEY']
-app.config['BUCKET'] = os.environ['BUCKET']
+app.config['DO_ACCESS_KEY_ID'] = os.environ.get('DO_ACCESS_KEY_ID', '')
+app.config['DO_SECRET_ACCESS_KEY'] = os.environ.get('DO_SECRET_ACCESS_KEY', '')
+app.config['BUCKET'] = os.environ.get('BUCKET', '')
 app.config['SECRET_KEY'] = "SECRET!"
 
 # GLOBAL CONSTANTS
-BUCKET = os.environ['BUCKET']
-BASE_URL = os.environ['BASE_URL']
+BUCKET = os.environ.get('BUCKET', '')
+BASE_URL = os.environ.get('BASE_URL', "localhost")
 
 connect_db(app)
 
